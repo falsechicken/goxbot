@@ -1,39 +1,65 @@
 package command
 
 import (
+	"github.com/falsechicken/glogger"
 	"github.com/falsechicken/goxbot"
+	"strings"
 )
 
-var CommandTable map[string]*goxbot.Plugin
 var CommandPrefix = '@'
 
+var commandTable map[string]goxbot.Plugin
+
 func init() {
-	CommandTable = make(map[string]*goxbot.Plugin)
+	commandTable = make(map[string]goxbot.Plugin)
 }
 
-//IsCommand returns true if the message starts with the command prefix.
-func IsCommand(m string) bool {
-	if []rune(m)[0] == CommandPrefix {
+/*
+ParseCommand Takes a message and breaks it into an array of arguments. Also removes the command prefix.
+*/
+func Parse(m string) []string {
+	s := (strings.Split(m, " "))
+
+	w := []rune(s[0])
+
+	w = append(w[:0], w[0+1:]...)
+
+	s[0] = string(w)
+	return s
+}
+
+//IsCommand checks if an entry exists in the command table.
+func Exists(cmd string) bool {
+	if _, exists := commandTable[cmd]; exists {
 		return true
 	} else {
 		return false
 	}
 }
 
-//SetCommandPrefix sets the character that will be used to run a message as a command or not.
+//SetCommandPrefix sets the character needed to decide to check a message as a command.
 func SetCommandPrefix(p rune) {
 	CommandPrefix = p
 }
 
-/*
-AddCommandToTable adds a command and its matching plugin to the command table.
-Previous entries will be overwritten.
-*/
-func AddCommandToTable(command string, p *goxbot.Plugin) {
-	CommandTable[command] = p
+//Register register a plugin to act upon a command.
+func Register(cmd string, plugin goxbot.Plugin) {
+	glogger.LogMessage(glogger.Debug, "Registered command "+cmd)
+	commandTable[cmd] = plugin
 }
 
-//parseCommand Takes a message and breaks it into an array of arguments.
-func parseCommand(m string) []string {
-	return []string{m}
+//Execute runs a command. Accepts the command to be run a slice of arguments.
+func Execute(cmd string, args []string) bool {
+	commandTable[cmd].ProcessCommand(cmd, args)
+	return true
+}
+
+//HasCommandPrefix returns true is the strings first element is the command prefix.
+func HasCommandPrefix(cmd string) bool {
+	s := strings.Split(cmd, "")
+	if s[0] == string(CommandPrefix) {
+		return true
+	} else {
+		return false
+	}
 }

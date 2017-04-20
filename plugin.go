@@ -3,9 +3,20 @@ package goxbot
 import "github.com/mattn/go-xmpp"
 
 type Plugin interface {
-	//Initialize Plugin
-	Init(c map[string]string) bool
-	ProcessMessage(m xmpp.Chat) bool
+	//Init initializes the plugin. Returns true if successful.
+	Init(*xmpp.Client, map[string]string) bool
+
+	//GetInfo should return the name of the plugin followed by the version.
+	GetInfo() (string, string)
+
+	//ProcessChat is called when a message matches a plugins signature.
+	ProcessChat(m xmpp.Chat) bool
+
+	//ProcessPresence is called when a presense message is received.
+	ProcessPresence(p xmpp.Presence) bool
+
+	//ProcessCommand is called when a command is made that the plugin registered. Commands are any message starting with the command prefix. @ by default.
+	ProcessCommand(c string, a []string)
 }
 
 type PluginConf struct {

@@ -11,7 +11,7 @@ import (
 
 	"github.com/falsechicken/glogger"
 	"github.com/falsechicken/goxbot"
-    "github.com/falsechicken/goxbot/command"
+	"github.com/falsechicken/goxbot/command"
 	"github.com/falsechicken/goxbot/plugins"
 	"github.com/mattn/go-xmpp"
 )
@@ -26,7 +26,7 @@ var starttls = flag.Bool("starttls", true, "Enable StartTLS")
 var debug = flag.Bool("debug", false, "debug output")
 var session = flag.Bool("session", false, "use server session")
 
-var loadedPlugins = [1]goxbot.Plugin{new(plugins.AutoSubscribe)}
+var loadedPlugins = [2]goxbot.Plugin{new(plugins.AutoSubscribe), new(plugins.Status)}
 
 var talk *xmpp.Client
 
@@ -40,22 +40,7 @@ func main() {
 
 	initPlugins()
 
-	go func() {
-		for {
-			chat, err := talk.Recv()
-			if err != nil {
-				log.Fatal(err)
-			}
-			switch v := chat.(type) {
-			case xmpp.Chat:
-                fmt.Println(v.Remote, v.Text)
-				fmt.Println()
-			case xmpp.Presence:
-				fmt.Println(v.From, v.Show)
-				fmt.Println()
-			}
-		}
-	}()
+	go listen()
 
 	for {
 		in := bufio.NewReader(os.Stdin)
@@ -75,11 +60,25 @@ func main() {
 //Run the plugin's init function
 func initPlugins() {
 	for _, v := range loadedPlugins {
-		v.Init(make(map[string]string))
+		v.Init(talk, make(map[string]string))
 	}
 }
 
-func loadConfig() {}
+func processChat(c xmpp.Chat) {
+	for _, v := range loadedPlugins {
+		if v.ProcessChat(c) {
+			break
+		}
+	}
+}
+
+func processPresence(p xmpp.Presence) {
+	for _, v := range loadedPlugins {
+		if v.ProcessPresence(p) {
+			break
+		}
+	}
+}
 
 func parseFlags() {
 	flag.Usage = func() {
@@ -129,6 +128,36 @@ func initXMPP() {
 
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func listen() {
+	for {
+		chat, err := talk.Recv()
+		if err != nil {
+			log.Fatal(err)
+		}
+		switch v := chat.(type) {
+		case xmpp.Chat:
+			fmt.Println(v.Remote, v.Text)
+			if command.HasCommandPrefix(v.Text) {
+				var s = command.Parse(v.Text)
+				if command.Exists(s[0]) {
+					glogger.LogMessage(glogger.Debug, "Executing command "+s[0])
+					command.Execute(s[0], s)
+				} else {
+					glogger.LogMessage(glogger.Debug, "Command "+s[0]+" not found.")
+				}
+			} else {
+				processChat(v)
+			}
+
+		case xmpp.Presence:
+			fmt.Println(v.From, v.Show)
+			fmt.Println()
+			processPresence(v)
+
+		}
 	}
 }
 

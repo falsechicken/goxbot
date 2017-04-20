@@ -1,8 +1,8 @@
 package plugins
 
 import (
-	"github.com/mattn/go-xmpp"
 	"github.com/falsechicken/goxbot"
+	"github.com/mattn/go-xmpp"
 )
 
 type PluginTemplate struct {
@@ -14,10 +14,16 @@ func (a *PluginTemplate) Init(conf map[string]string) bool {
 	return true
 }
 
-/*
- * Process an incoming message. Return true to signify the handling of the message.
- * Prevents the message from propagating further.
- */
-func (a *PluginTemplate) ProcessMessage(m xmpp.Chat) bool {
-	return true
+//ProcessChat is called when the intentEngine has determined that a message has matched a signature of a plugin.
+func (a *PluginTemplate) ProcessChat(m xmpp.Chat) bool {
+	return false
+}
+
+func (a *PluginTemplate) ProcessPresence(p xmpp.Presence) bool {
+	return false
+}
+
+//ProcessCommand is called when a command is issued and the plugin has registered the command.
+func (a *PluginTemplate) ProcessCommand(cmd string, arg string) {
+
 }
