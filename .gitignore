@@ -24,4 +24,6 @@ _testmain.go
 *.prof
 
 cmd/goxbot/goxbot
+cmd/goxbot/goxbot.toml
 *.un~
+

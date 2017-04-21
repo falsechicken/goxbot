@@ -44,20 +44,27 @@ func SetCommandPrefix(p rune) {
 
 //Register register a plugin to act upon a command.
 func Register(cmd string, plugin goxbot.Plugin) {
-	glogger.LogMessage(glogger.Debug, "Registered command "+cmd)
+	var pName, pVersion = plugin.GetInfo()
+	glogger.LogMessage(glogger.Debug, "Plugin "+pName+"(v"+pVersion+") registered command "+cmd+".")
 	commandTable[cmd] = plugin
 }
 
-//Execute runs a command. Accepts the command to be run a slice of arguments.
+//Execute runs a command. Accepts the command to be run and a slice of arguments.
 func Execute(cmd string, args []string) bool {
-	commandTable[cmd].ProcessCommand(cmd, args)
-	return true
+	if !Exists(cmd) {
+		glogger.LogMessage(glogger.Debug, "Command "+cmd+" does not exist.")
+		return false
+	} else {
+		glogger.LogMessage(glogger.Debug, "Executing command "+cmd)
+		commandTable[cmd].ProcessCommand(cmd, args)
+		return true
+	}
 }
 
 //HasCommandPrefix returns true is the strings first element is the command prefix.
 func HasCommandPrefix(cmd string) bool {
 	s := strings.Split(cmd, "")
-	if s[0] == string(CommandPrefix) {
+	if len(s) != 0 && s[0] == string(CommandPrefix) {
 		return true
 	} else {
 		return false

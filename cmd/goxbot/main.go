@@ -12,29 +12,38 @@ import (
 	"github.com/falsechicken/glogger"
 	"github.com/falsechicken/goxbot"
 	"github.com/falsechicken/goxbot/command"
+	"github.com/falsechicken/goxbot/config"
 	"github.com/falsechicken/goxbot/plugins"
 	"github.com/mattn/go-xmpp"
 )
 
+const Version = "0.0.1"
+
 var server = flag.String("server", "", "server:port")
 var username = flag.String("username", "", "username")
 var password = flag.String("password", "", "password")
-var status = flag.String("status", "xa", "status")
+var status = flag.String("status", "", "status")
 var statusMessage = flag.String("status-msg", "I for one welcome our new codebot overlords.", "status message")
 var notls = flag.Bool("notls", true, "No TLS")
 var starttls = flag.Bool("starttls", true, "Enable StartTLS")
 var debug = flag.Bool("debug", false, "debug output")
 var session = flag.Bool("session", false, "use server session")
+var console = flag.Bool("console", false, "enable the command console.")
+var configPath = flag.String("config", "goxbot.toml", "set configuration file location.")
 
-var loadedPlugins = [2]goxbot.Plugin{new(plugins.AutoSubscribe), new(plugins.Status)}
+var loadedPlugins = [3]goxbot.Plugin{new(plugins.AutoSubscribe), new(plugins.Status), new(plugins.PluginTemplate)}
 
 var talk *xmpp.Client
 
+var conf config.Config
+
 func main() {
 
-	glogger.LogMessage(glogger.Debug, "GoXBot starting up...")
+	glogger.LogMessage(glogger.Info, "GoXBot "+Version+" starting up...")
 
 	parseFlags()
+
+	loadConfig()
 
 	initXMPP()
 
@@ -42,31 +51,36 @@ func main() {
 
 	go listen()
 
-	for {
-		in := bufio.NewReader(os.Stdin)
-		line, err := in.ReadString('\n')
-		if err != nil {
-			continue
+	if !*console {
+		for {
 		}
-		line = strings.TrimRight(line, "\n")
+	} else {
+		for {
+			in := bufio.NewReader(os.Stdin)
+			line, err := in.ReadString('\n')
+			if err != nil {
+				continue
+			}
+			line = strings.TrimRight(line, "\n")
 
-		tokens := strings.SplitN(line, " ", 2)
-		if len(tokens) == 2 {
-			talk.Send(xmpp.Chat{Remote: tokens[0], Type: "chat", Text: tokens[1]})
+			tokens := strings.SplitN(line, " ", 2)
+			if len(tokens) == 2 {
+				talk.Send(xmpp.Chat{Remote: tokens[0], Type: "chat", Text: tokens[1]})
+			}
 		}
 	}
 }
 
 //Run the plugin's init function
 func initPlugins() {
-	for _, v := range loadedPlugins {
-		v.Init(talk, make(map[string]string))
+	for _, p := range loadedPlugins {
+		p.Init(talk, make(map[string]string))
 	}
 }
 
 func processChat(c xmpp.Chat) {
-	for _, v := range loadedPlugins {
-		if v.ProcessChat(c) {
+	for _, p := range loadedPlugins {
+		if p.ProcessChat(c) {
 			break
 		}
 	}
@@ -100,28 +114,28 @@ func initXMPP() {
 
 	if !*notls {
 		xmpp.DefaultConfig = tls.Config{
-			ServerName:         serverName(*server),
+			ServerName:         serverName(conf.Server),
 			InsecureSkipVerify: false,
 		}
 	}
 
 	xmpp.DefaultConfig = tls.Config{
-		ServerName:         serverName(*server),
+		ServerName:         serverName(conf.Server),
 		InsecureSkipVerify: true,
 	}
 
 	var err error
 	options := xmpp.Options{
-		Host:                         *server,
-		User:                         *username,
-		Password:                     *password,
+		Host:                         conf.Server,
+		User:                         conf.Username,
+		Password:                     conf.Password,
 		NoTLS:                        *notls,
-		Debug:                        *debug,
-		Session:                      *session,
-		Status:                       *status,
-		StatusMessage:                *statusMessage,
+		Debug:                        conf.Debug,
+		Session:                      conf.Session,
+		Status:                       conf.Status,
+		StatusMessage:                conf.StatusMessage,
 		InsecureAllowUnencryptedAuth: false,
-		StartTLS:                     *starttls,
+		StartTLS:                     conf.StartTLS,
 	}
 
 	talk, err = options.NewClient()
@@ -139,26 +153,21 @@ func listen() {
 		}
 		switch v := chat.(type) {
 		case xmpp.Chat:
-			fmt.Println(v.Remote, v.Text)
 			if command.HasCommandPrefix(v.Text) {
 				var s = command.Parse(v.Text)
-				if command.Exists(s[0]) {
-					glogger.LogMessage(glogger.Debug, "Executing command "+s[0])
-					command.Execute(s[0], s)
-				} else {
-					glogger.LogMessage(glogger.Debug, "Command "+s[0]+" not found.")
-				}
+				command.Execute(s[0], s)
 			} else {
 				processChat(v)
 			}
 
 		case xmpp.Presence:
-			fmt.Println(v.From, v.Show)
-			fmt.Println()
 			processPresence(v)
-
 		}
 	}
+}
+
+func loadConfig() {
+	conf = config.Load(*configPath)
 }
 
 //Seperate domain name and port.

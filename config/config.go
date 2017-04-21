@@ -1,19 +1,36 @@
 package config
 
 import (
-    "encoding/json"
-    "os"
+	"github.com/BurntSushi/toml"
+	"github.com/falsechicken/glogger"
+	"os"
 )
 
-type Option struct {
-    Name string
-    Argument string
-    List []string
+type Config struct {
+	Server        string
+	Username      string
+	Password      string
+	Status        string
+	StatusMessage string
+	StartTLS      bool
+	Debug         bool
+	Session       bool
+	Console       bool
 }
 
-func (p *Option) init() {
-    p.List = make([]string, 1)
+func Load(path string) Config {
+	_, err := os.Stat(path)
+	if err != nil {
+		glogger.LogMessage(glogger.Warning, "Config file is missing: "+path)
+	}
+
+	var config Config
+	if _, err := toml.DecodeFile(path, &config); err != nil {
+		glogger.LogMessage(glogger.Error, err.Error())
+		os.Exit(2)
+	}
+	return config
 }
 
-func Load(path string) {
+func generateDefaultConfig() {
 }

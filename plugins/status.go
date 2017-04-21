@@ -39,10 +39,10 @@ func (s *Status) ProcessPresence(p xmpp.Presence) bool {
 	return false
 }
 
-func (s *Status) ProcessCommand(cmd string, arg []string) {
+func (s *Status) ProcessCommand(cmd string, arg []string) bool {
+	return false
 }
 
 func handleCmd() {
 	glogger.LogMessage(glogger.Info, "Handled status command")
-
 }
