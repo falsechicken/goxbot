@@ -13,6 +13,7 @@ import (
 	"github.com/falsechicken/goxbot"
 	"github.com/falsechicken/goxbot/command"
 	"github.com/falsechicken/goxbot/config"
+	"github.com/falsechicken/goxbot/permissions"
 	"github.com/falsechicken/goxbot/plugins"
 	"github.com/mattn/go-xmpp"
 )
@@ -29,7 +30,7 @@ var starttls = flag.Bool("starttls", true, "Enable StartTLS")
 var debug = flag.Bool("debug", false, "debug output")
 var session = flag.Bool("session", false, "use server session")
 var console = flag.Bool("console", false, "enable the command console.")
-var configPath = flag.String("config", "goxbot.toml", "set configuration file location.")
+var configPath = flag.String("config", ".", "set configuration file location.")
 
 var loadedPlugins = [3]goxbot.Plugin{new(plugins.AutoSubscribe), new(plugins.Status), new(plugins.PluginTemplate)}
 
@@ -44,6 +45,8 @@ func main() {
 	parseFlags()
 
 	loadConfig()
+
+	loadPerms()
 
 	initXMPP()
 
@@ -155,7 +158,11 @@ func listen() {
 		case xmpp.Chat:
 			if command.HasCommandPrefix(v.Text) {
 				var s = command.Parse(v.Text)
-				command.Execute(s[0], s)
+				if permissions.HasPermission(v.Remote, s[0]) {
+					command.Execute(s[0], s)
+				} else {
+					talk.Send(xmpp.Chat{Remote: v.Remote, Type: "chat", Text: "You do not have permission to execute this command."})
+				}
 			} else {
 				processChat(v)
 			}
@@ -167,7 +174,11 @@ func listen() {
 }
 
 func loadConfig() {
-	conf = config.Load(*configPath)
+	conf = config.Load(*configPath + "/goxbot.toml")
+}
+
+func loadPerms() {
+	permissions.Load(*configPath + "/perms.toml")
 }
 
 //Seperate domain name and port.

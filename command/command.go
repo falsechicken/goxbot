@@ -1,6 +1,7 @@
 package command
 
 import (
+	"errors"
 	"github.com/falsechicken/glogger"
 	"github.com/falsechicken/goxbot"
 	"strings"
@@ -42,22 +43,28 @@ func SetCommandPrefix(p rune) {
 	CommandPrefix = p
 }
 
-//Register register a plugin to act upon a command.
+//Register registers a plugin to act upon a command. Only one plugin can subscribe to a command at a time.
 func Register(cmd string, plugin goxbot.Plugin) {
 	var pName, pVersion = plugin.GetInfo()
 	glogger.LogMessage(glogger.Debug, "Plugin "+pName+"(v"+pVersion+") registered command "+cmd+".")
+
+	if _, exists := commandTable[cmd]; exists {
+		var cPName, _ = commandTable[cmd].GetInfo()
+		glogger.LogMessage(glogger.Warning, "Plugin "+pName+" is overwriting command "+cmd+" registered by "+cPName)
+	}
+
 	commandTable[cmd] = plugin
 }
 
 //Execute runs a command. Accepts the command to be run and a slice of arguments.
-func Execute(cmd string, args []string) bool {
+func Execute(cmd string, args []string) (bool, error) {
 	if !Exists(cmd) {
 		glogger.LogMessage(glogger.Debug, "Command "+cmd+" does not exist.")
-		return false
+		return false, errors.New("Command " + cmd + " does not exist.")
 	} else {
 		glogger.LogMessage(glogger.Debug, "Executing command "+cmd)
 		commandTable[cmd].ProcessCommand(cmd, args)
-		return true
+		return true, nil
 	}
 }
 

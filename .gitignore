@@ -25,5 +25,6 @@ _testmain.go
 
 cmd/goxbot/goxbot
 cmd/goxbot/goxbot.toml
+cmd/goxbot/perms.toml
 *.un~
-
+*.swp
