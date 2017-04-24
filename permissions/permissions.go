@@ -54,22 +54,25 @@ func Save(path string) bool {
 func generateDefaultConfig(path string) bool {
 	glogger.LogMessage(glogger.Warning, "Generating default permissions file...")
 
-	permsTable.User = append(permsTable.User, *new(User), *new(User))
-	permsTable.User[0].JID = "user@example.net"
-	permsTable.User[0].Groups = make([]string, 2)
-	permsTable.User[0].Groups[0] = "admin"
-	permsTable.User[0].Groups[1] = "default"
-	permsTable.User[0].Permissions = make([]string, 2)
-	permsTable.User[0].Permissions[0] = "status"
-	permsTable.User[0].Permissions[1] = "test"
+	var defaultPerms = new(PermsTable)
+	defaultPerms.User = make([]User, 2, 2)
 
-	permsTable.User[1].JID = "user2@example2.net"
-	permsTable.User[1].Groups = make([]string, 2)
-	permsTable.User[1].Groups[0] = "user"
-	permsTable.User[1].Groups[1] = "default"
-	permsTable.User[1].Permissions = make([]string, 2)
-	permsTable.User[1].Permissions[0] = "exampleCmd"
-	permsTable.User[1].Permissions[1] = "superAbility"
+	defaultPerms.User = append(defaultPerms.User, *new(User), *new(User))
+	defaultPerms.User[0].JID = "user@example.net"
+	defaultPerms.User[0].Groups = make([]string, 2)
+	defaultPerms.User[0].Groups[0] = "admin"
+	defaultPerms.User[0].Groups[1] = "default"
+	defaultPerms.User[0].Permissions = make([]string, 2)
+	defaultPerms.User[0].Permissions[0] = "status"
+	defaultPerms.User[0].Permissions[1] = "test"
+
+	defaultPerms.User[1].JID = "user2@example2.net"
+	defaultPerms.User[1].Groups = make([]string, 2)
+	defaultPerms.User[1].Groups[0] = "user"
+	defaultPerms.User[1].Groups[1] = "default"
+	defaultPerms.User[1].Permissions = make([]string, 2)
+	defaultPerms.User[1].Permissions[0] = "exampleCmd"
+	defaultPerms.User[1].Permissions[1] = "superAbility"
 
 	perms, err := os.Create(path)
 	if err != nil {
@@ -80,7 +83,7 @@ func generateDefaultConfig(path string) bool {
 
 	encoder := toml.NewEncoder(perms)
 
-	encoder.Encode(permsTable)
+	encoder.Encode(defaultPerms)
 
 	return true
 }
