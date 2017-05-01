@@ -34,7 +34,7 @@ var session = flag.Bool("session", false, "use server session")
 var console = flag.Bool("console", false, "enable the command console.")
 var configPath = flag.String("config", ".", "set configuration file location.")
 
-var loadedPlugins = [3]goxbot.Plugin{new(plugins.AutoSubscribe), new(plugins.Status), new(plugins.PluginTemplate)}
+var loadedPlugins = [4]goxbot.Plugin{new(plugins.AutoSubscribe), new(plugins.Status), new(plugins.PluginTemplate), new(plugins.Execute)}
 
 var talk *xmpp.Client
 
@@ -161,7 +161,7 @@ func listen() {
 			if command.HasCommandPrefix(v.Text) {
 				var s = command.Parse(v.Text)
 				if permissions.HasPermission(v.Remote, s[0]) {
-					command.Execute(s[0], s)
+					go command.Execute(v.Remote, s[0], s[1:])
 				} else {
 					talk.Send(xmpp.Chat{Remote: v.Remote, Type: "chat", Text: "You do not have permission to execute this command."})
 				}
@@ -176,11 +176,11 @@ func listen() {
 }
 
 func loadConfig() {
-	conf = config.Load(*configPath + "/goxbot.toml")
+	conf = config.Load(*configPath)
 }
 
 func loadPerms() {
-	permissions.Load(*configPath + "/perms.toml")
+	permissions.Load(*configPath)
 }
 
 //Seperate domain name and port.
