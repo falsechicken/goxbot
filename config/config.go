@@ -1,9 +1,10 @@
 package config
 
 import (
+	"os"
+
 	"github.com/BurntSushi/toml"
 	"github.com/falsechicken/glogger"
-	"os"
 )
 
 type Config struct {
@@ -20,14 +21,14 @@ type Config struct {
 
 //Load loads the toml config file at the path provided. If the file does not exist a default one will be created at that path.
 func Load(path string) Config {
-	_, err := os.Stat(path)
+	_, err := os.Stat(path + "/goxbot.toml")
 	if err != nil {
-		glogger.LogMessage(glogger.Warning, "Config file is missing: "+path)
+		glogger.LogMessage(glogger.Warning, "Config file is missing: "+path+"/goxbot.toml")
 		generateDefaultConfig(path)
 	}
 
 	var config Config
-	if _, err := toml.DecodeFile(path, &config); err != nil {
+	if _, err := toml.DecodeFile(path+"/goxbot.toml", &config); err != nil {
 		glogger.LogMessage(glogger.Error, err.Error())
 		os.Exit(2)
 	}
@@ -35,11 +36,14 @@ func Load(path string) Config {
 }
 
 func generateDefaultConfig(path string) {
+
+	glogger.LogMessage(glogger.Info, "Generating default config file...")
+
 	defConf := new(Config)
 
-	config, err := os.Create(path)
+	config, err := os.Create(path + "/goxbot.toml")
 	if err != nil {
-		glogger.LogMessage(glogger.Error, "Cannot create config file!: "+path)
+		glogger.LogMessage(glogger.Error, "Cannot create config file!: "+path+"/goxbot.toml")
 		panic(err)
 	}
 	defer config.Close()
@@ -57,4 +61,8 @@ func generateDefaultConfig(path string) {
 	defConf.Console = false
 
 	encoder.Encode(defConf)
+
+	glogger.LogMessage(glogger.Info, "Please edit configuration file and run GoXBot again.")
+	os.Exit(0)
+
 }

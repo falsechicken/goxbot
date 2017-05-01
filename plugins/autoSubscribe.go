@@ -42,6 +42,6 @@ func (a *AutoSubscribe) ProcessPresence(m xmpp.Presence) bool {
 	return false
 }
 
-func (a *AutoSubscribe) ProcessCommand(cmd string, arg []string) bool {
+func (a *AutoSubscribe) ProcessCommand(jid string, cmd string, arg []string) bool {
 	return false
 }

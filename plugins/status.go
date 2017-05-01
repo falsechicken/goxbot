@@ -39,7 +39,7 @@ func (s *Status) ProcessPresence(p xmpp.Presence) bool {
 	return false
 }
 
-func (s *Status) ProcessCommand(cmd string, arg []string) bool {
+func (s *Status) ProcessCommand(jid string, cmd string, arg []string) bool {
 	return false
 }
 

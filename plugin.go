@@ -16,7 +16,7 @@ type Plugin interface {
 	ProcessPresence(p xmpp.Presence) bool
 
 	//ProcessCommand is called when a command is made that the plugin registered. Commands are any message starting with the command prefix. @ by default.
-	ProcessCommand(c string, a []string) bool
+	ProcessCommand(j string, c string, a []string) bool
 }
 
 type PluginConf struct {

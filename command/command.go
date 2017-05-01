@@ -2,12 +2,13 @@ package command
 
 import (
 	"errors"
+	"strings"
+
 	"github.com/falsechicken/glogger"
 	"github.com/falsechicken/goxbot"
-	"strings"
 )
 
-var CommandPrefix = '@'
+var CommandPrefix = "@"
 
 var commandTable map[string]goxbot.Plugin
 
@@ -29,7 +30,7 @@ func Parse(m string) []string {
 	return s
 }
 
-//IsCommand checks if an entry exists in the command table.
+//Exists checks if an entry exists in the command table.
 func Exists(cmd string) bool {
 	if _, exists := commandTable[cmd]; exists {
 		return true
@@ -39,7 +40,7 @@ func Exists(cmd string) bool {
 }
 
 //SetCommandPrefix sets the character needed to decide to check a message as a command.
-func SetCommandPrefix(p rune) {
+func SetCommandPrefix(p string) {
 	CommandPrefix = p
 }
 
@@ -57,23 +58,18 @@ func Register(cmd string, plugin goxbot.Plugin) {
 }
 
 //Execute runs a command. Accepts the command to be run and a slice of arguments.
-func Execute(cmd string, args []string) (bool, error) {
+func Execute(jid string, cmd string, args []string) (bool, error) {
 	if !Exists(cmd) {
 		glogger.LogMessage(glogger.Debug, "Command "+cmd+" does not exist.")
 		return false, errors.New("Command " + cmd + " does not exist.")
 	} else {
 		glogger.LogMessage(glogger.Debug, "Executing command "+cmd)
-		commandTable[cmd].ProcessCommand(cmd, args)
+		commandTable[cmd].ProcessCommand(jid, cmd, args)
 		return true, nil
 	}
 }
 
 //HasCommandPrefix returns true is the strings first element is the command prefix.
 func HasCommandPrefix(cmd string) bool {
-	s := strings.Split(cmd, "")
-	if len(s) != 0 && s[0] == string(CommandPrefix) {
-		return true
-	} else {
-		return false
-	}
+	return strings.HasPrefix(cmd, CommandPrefix)
 }

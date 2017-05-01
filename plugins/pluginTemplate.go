@@ -37,6 +37,6 @@ func (a *PluginTemplate) ProcessPresence(p xmpp.Presence) bool {
 }
 
 //ProcessCommand is called when a command is issued and the plugin has registered the command. Return true if the command was successful.
-func (a *PluginTemplate) ProcessCommand(cmd string, arg []string) bool {
+func (a *PluginTemplate) ProcessCommand(jid string, cmd string, arg []string) bool {
 	return true
 }
