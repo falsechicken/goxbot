@@ -24,6 +24,7 @@ _testmain.go
 *.prof
 
 cmd/goxbot/goxbot
+cmd/goxbot/debug
 cmd/goxbot/goxbot.toml
 cmd/goxbot/perms.toml
 cmd/goxbot/groups.toml

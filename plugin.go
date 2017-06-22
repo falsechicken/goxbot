@@ -3,7 +3,7 @@ package goxbot
 import "github.com/mattn/go-xmpp"
 
 type Plugin interface {
-	//Init initializes the plugin.Provides a pointer to the client and  returns true if successful.
+	//Init initializes the plugin. Provides a pointer to the client and  returns true if successful.
 	Init(*xmpp.Client, map[string]string) bool
 
 	//GetInfo should return the name of the plugin followed by the version.

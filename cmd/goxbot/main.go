@@ -20,6 +20,7 @@ import (
 	"github.com/mattn/go-xmpp"
 )
 
+//Goxbot Version
 const Version = "0.0.1"
 
 var server = flag.String("server", "", "server:port")
@@ -80,6 +81,8 @@ func main() {
 func initPlugins() {
 	for _, p := range loadedPlugins {
 		p.Init(talk, make(map[string]string))
+		var name, version = p.GetInfo()
+		glogger.LogMessage(glogger.Info, name+" "+version+" initialized.")
 	}
 }
 
@@ -177,6 +180,7 @@ func listen() {
 
 func loadConfig() {
 	conf = config.Load(*configPath)
+	glogger.SetDebugMode(conf.Debug)
 }
 
 func loadPerms() {

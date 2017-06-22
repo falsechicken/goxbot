@@ -1,7 +1,8 @@
 package plugins
 
 import (
-	"github.com/falsechicken/glogger"
+	"os/exec"
+
 	"github.com/falsechicken/goxbot"
 	"github.com/falsechicken/goxbot/command"
 	"github.com/mattn/go-xmpp"
@@ -21,8 +22,6 @@ func (s *Status) Init(c *xmpp.Client, conf map[string]string) bool {
 
 	s.client = c
 
-	glogger.LogMessage(glogger.Info, s.Name+" "+s.Version+" initializing...")
-
 	command.Register("status", s)
 	return true
 }
@@ -40,9 +39,19 @@ func (s *Status) ProcessPresence(p xmpp.Presence) bool {
 }
 
 func (s *Status) ProcessCommand(jid string, cmd string, arg []string) bool {
+	if cmd == "status" {
+		handleCmd(s, jid)
+		return true
+	}
 	return false
 }
 
-func handleCmd() {
-	glogger.LogMessage(glogger.Info, "Handled status command")
+func handleCmd(s *Status, jid string) {
+
+	memoryInfo, _ := exec.Command("free", "-m").Output()
+
+	var msg = string(memoryInfo)
+
+	s.client.Send(xmpp.Chat{Remote: jid, Type: "chat", Text: msg})
+
 }
